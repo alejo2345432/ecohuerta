@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>EcoHuerta — Sustainable Crops & Learning</title>
+    <meta
+      name="description"
+      content="EcoHuerta: learn sustainable crops, seasons, and best practices. Built with Tailwind CSS v4 (CDN) to demonstrate utility-first."
+    />
+
+    <!-- Tailwind v4 Play CDN (official) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- Font Awesome (icons) -->
+    <script
+      src="https://kit.fontawesome.com/3a0df0ed78.js"
+      crossorigin="anonymous"
+    ></script>
+
+    <!--
+      Tailwind v4: custom CSS with all directives is allowed when using `type="text/tailwindcss"`.
+      We define:
+      - @theme: design tokens (colors, fonts, breakpoints)
+      - @custom-variant dark: class-based dark mode (.dark on <html>)
+      - @layer components: reusable UI helpers
+    -->
+    <style type="text/tailwindcss">
+      /* =========================
+         1) THEME TOKENS (v4)
+         ========================= */
+      @theme {
+        /* Modern eco palette using OKLCH for predictable contrast */
+        --color-eco-50: oklch(0.97 0.02 150);
+        --color-eco-100: oklch(0.94 0.03 150);
+        --color-eco-200: oklch(0.88 0.05 150);
+        --color-eco-300: oklch(0.82 0.08 150);
+        --color-eco-500: oklch(0.7 0.12 150);
+        --color-eco-600: oklch(0.62 0.12 150);
+        --color-eco-700: oklch(0.54 0.11 150);
+
+        /* Accent (earthy amber) */
+        --color-earth-400: oklch(0.78 0.1 80);
+        --color-earth-600: oklch(0.58 0.11 80);
+
+        /* Neutral surfaces tuned for contrast in light/dark */
+        --color-surface: oklch(0.99 0 0);
+        --color-surface-weak: oklch(0.97 0 0);
+        --color-ink: oklch(0.2 0 0);
+        --color-ink-weak: oklch(0.35 0 0);
+
+        /* Typography */
+        --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI,
+          Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+
+        /* Extra breakpoint for large screens */
+        --breakpoint-3xl: 120rem;
+      }
+
+      /* =========================
+         2) DARK MODE (class strategy)
+         - v4 recommends custom variant
+         ========================= */
+      @custom-variant dark (&:where(.dark, .dark *));
+      /* Optional: slightly different base tokens in dark */
+      .dark {
+        --color-surface: oklch(0.14 0 0);
+        --color-surface-weak: oklch(0.2 0 0);
+        --color-ink: oklch(0.98 0 0);
+        --color-ink-weak: oklch(0.86 0 0);
+      }
+
+      /* =========================
+         3) COMPONENTS LAYER
+         ========================= */
+      @layer components {
+        /* Button primitives */
+        .btn {
+          @apply inline-flex items-center gap-2 rounded-md px-5 py-2.5 font-medium transition outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+        }
+        .btn-primary {
+          @apply bg-eco-600 text-white hover:bg-eco-700 focus-visible:ring-eco-600 ring-offset-surface;
+        }
+        .btn-secondary {
+          @apply bg-white text-eco-700 border border-eco-600 hover:bg-eco-50 focus-visible:ring-eco-600 ring-offset-surface;
+        }
+        .btn-ghost {
+          @apply text-eco-700 hover:bg-eco-50 dark:text-eco-200 dark:hover:bg-white/10;
+        }
+
+        /* Card */
+        .card {
+          @apply rounded-xl bg-white/90 dark:bg-white/5 backdrop-blur shadow ring-1 ring-black/5 p-6;
+        }
+        .card-hover {
+          @apply transition hover:shadow-lg hover:-translate-y-0.5;
+        }
+
+        /* Badge */
+        .badge {
+          @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold;
+        }
+        .badge-seed {
+          @apply bg-eco-100 text-eco-700;
+        }
+        .badge-grow {
+          @apply bg-amber-100 text-amber-900;
+        }
+        .badge-harvest {
+          @apply bg-emerald-100 text-emerald-900;
+        }
+
+        /* Input */
+        .input {
+          @apply w-full rounded-md border border-gray-300 bg-white/90 dark:bg-white/10 px-4 py-2 text-sm placeholder:text-gray-500 dark:placeholder:text-gray-400 outline-none focus-visible:ring-2 focus-visible:ring-eco-600;
+        }
+
+        /* Section title */
+        .section-title {
+          @apply text-2xl sm:text-3xl font-semibold tracking-tight;
+        }
+
+        /* High-contrast helper for icons on soft backgrounds */
+        .icon-on-soft {
+          @apply text-eco-700 dark:text-eco-200;
+        }
+      }
+    </style>
+
+    <!-- Initial theme (avoid FOUC). Sync system preference + saved choice -->
+    <script>
+      // Respect previous choice or system preference
+      const saved = localStorage.getItem("theme"); // 'dark' | 'light' | null
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)"
+      ).matches;
+      if (saved === "dark" || (!saved && prefersDark)) {
+        document.documentElement.classList.add("dark");
+      }
+    </script>
+
+    <!-- Base color scheme for scrollbars, form controls, etc. -->
+    <meta name="color-scheme" content="light dark" />
+  </head>
+
+  <!-- Use semantic landmarks and good contrast defaults -->
+  <body
+    class="font-sans bg-surface text-ink dark:bg-surface dark:text-ink min-h-dvh selection:bg-eco-200/60 selection:text-ink"
+  >
+    <!-- =======================
+         HEADER / NAVBAR
+         ======================= -->
+    <header
+      class="sticky top-0 z-50 bg-surface/80 backdrop-blur border-b border-black/5"
+    >
+      <nav
+        class="max-w-screen-xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between"
+      >
+        <a
+          class="flex items-center gap-3"
+          href="#home"
+          aria-label="EcoHuerta home"
+        >
+          <span
+            class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-eco-600 text-white"
+          >
+            <i class="fa-solid fa-seedling" aria-hidden="true"></i>
+          </span>
+          <span class="text-lg font-semibold">EcoHuerta</span>
+        </a>
+
+        <button
+          id="themeToggle"
+          class="btn btn-ghost"
+          type="button"
+          aria-pressed="false"
+          aria-label="Toggle dark mode"
+        >
+          <i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i>
+          Theme
+        </button>
+      </nav>
+    </header>
+
+    <!-- =======================
+         HERO
+         ======================= -->
+    <section id="home" class="relative">
+      <div
+        class="absolute inset-0 -z-10 bg-gradient-to-b from-eco-50 to-surface dark:from-white/5 dark:to-surface"
+      ></div>
+
+      <div
+        class="max-w-screen-xl mx-auto px-4 sm:px-6 py-16 sm:py-24 grid lg:grid-cols-2 gap-10 items-center"
+      >
+        <div>
+          <h1 class="text-4xl sm:text-5xl font-bold leading-tight">
+            Grow smarter.
+            <span class="text-eco-700 dark:text-eco-200"
+              >Grow sustainable.</span
+            >
+          </h1>
+          <p class="mt-4 text-lg text-ink-weak">
+            Learn sustainable crops, seasons, and best practices with a
+            design-first approach built on Tailwind CSS utilities.
+          </p>
+
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="#crops" class="btn btn-primary">
+              <i class="fa-solid fa-leaf" aria-hidden="true"></i>
+              Explore crops
+            </a>
+            <a href="#subscribe" class="btn btn-secondary">
+              <i class="fa-solid fa-envelope-open-text" aria-hidden="true"></i>
+              Subscribe
+            </a>
+          </div>
+
+          <!-- Quick trust badges -->
+          <div
+            class="mt-6 flex flex-wrap items-center gap-3 text-sm text-ink-weak"
+          >
+            <span class="inline-flex items-center gap-2"
+              ><i class="fa-solid fa-droplet icon-on-soft"></i> Water-wise
+              tips</span
+            >
+            <span class="inline-flex items-center gap-2"
+              ><i class="fa-solid fa-sun icon-on-soft"></i> Seasonal
+              planning</span
+            >
+            <span class="inline-flex items-center gap-2"
+              ><i class="fa-solid fa-seedling icon-on-soft"></i> Organic
+              practices</span
+            >
+          </div>
+        </div>
+
+        <div class="card">
+          <div
+            class="aspect-video w-full rounded-lg bg-gradient-to-br from-eco-100 to-eco-50 dark:from-white/10 dark:to-white/5 grid place-items-center"
+          >
+            <i
+              class="fa-solid fa-tractor text-5xl icon-on-soft"
+              aria-hidden="true"
+            ></i>
+          </div>
+          <p class="mt-4 text-sm text-ink-weak">
+            This demo page is built with Tailwind v4 Play CDN to explain
+            utility-first: spacing, grid, colors, states, and dark mode.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================
+         CROPS GRID
+         ======================= -->
+    <section id="crops" class="max-w-screen-xl mx-auto px-4 sm:px-6 py-16">
+      <div class="flex items-end justify-between gap-4">
+        <h2 class="section-title">Featured crops</h2>
+        <a class="btn btn-ghost" href="#seasons">
+          Seasons <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+        </a>
+      </div>
+
+      <div
+        class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 3xl:grid-cols-4 gap-6"
+      >
+        <!-- Reusable crop card -->
+        <!-- Tomato -->
+        <article class="card card-hover">
+          <img
+            src="https://images.unsplash.com/photo-1561136594-7f68413baa99?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"
+            alt="Fresh tomatoes"
+            class="h-44 w-full object-cover rounded-lg"
+          />
+          <div class="mt-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold">Tomato</h3>
+              <span class="badge badge-harvest"
+                ><i class="fa-solid fa-basket-shopping" aria-hidden="true"></i>
+                Harvest</span
+              >
+            </div>
+            <p class="mt-2 text-sm text-ink-weak">
+              Warm-season crop. Full sun, regular watering, stake for support.
+            </p>
+          </div>
+        </article>
+
+        <!-- Lettuce -->
+        <article class="card card-hover">
+          <img
+            src="https://images.unsplash.com/photo-1519897831810-a9a01aceccd1?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1331"
+            alt="Crisp lettuce"
+            class="h-44 w-full object-cover rounded-lg"
+          />
+          <div class="mt-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold">Lettuce</h3>
+              <span class="badge badge-grow"
+                ><i class="fa-solid fa-sun" aria-hidden="true"></i> Grow</span
+              >
+            </div>
+            <p class="mt-2 text-sm text-ink-weak">
+              Cool-season leafy green. Partial shade in hot climates.
+            </p>
+          </div>
+        </article>
+
+        <!-- Carrot -->
+        <article class="card card-hover">
+          <img
+            src="https://images.unsplash.com/photo-1633380110125-f6e685676160?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1471"
+            alt="Carrots on soil"
+            class="h-44 w-full object-cover rounded-lg"
+          />
+          <div class="mt-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold">Carrot</h3>
+              <span class="badge badge-seed"
+                ><i class="fa-solid fa-seedling" aria-hidden="true"></i>
+                Seed</span
+              >
+            </div>
+            <p class="mt-2 text-sm text-ink-weak">
+              Loose, stone-free soil for straight roots. Keep moist during
+              germination.
+            </p>
+          </div>
+        </article>
+
+        <!-- Potato -->
+        <article class="card card-hover">
+          <img
+            src="https://images.unsplash.com/photo-1561635741-c416a5193b6e?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"
+            alt="Potatoes in a basket"
+            class="h-44 w-full object-cover rounded-lg"
+          />
+          <div class="mt-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold">Potato</h3>
+              <span class="badge badge-grow"
+                ><i class="fa-solid fa-cloud-sun" aria-hidden="true"></i>
+                Grow</span
+              >
+            </div>
+            <p class="mt-2 text-sm text-ink-weak">
+              Plant seed potatoes; hill soil around stems to protect tubers from
+              light.
+            </p>
+          </div>
+        </article>
+
+        <!-- Corn -->
+        <article class="card card-hover">
+          <img
+            src="https://images.unsplash.com/photo-1634467524884-897d0af5e104?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1470"
+            alt="Corn field"
+            class="h-44 w-full object-cover rounded-lg"
+          />
+          <div class="mt-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold">Corn</h3>
+              <span class="badge badge-seed"
+                ><i class="fa-solid fa-seedling" aria-hidden="true"></i>
+                Seed</span
+              >
+            </div>
+            <p class="mt-2 text-sm text-ink-weak">
+              Sow in blocks for pollination. Needs warmth, sun, and consistent
+              moisture.
+            </p>
+          </div>
+        </article>
+
+        <!-- Strawberry -->
+        <article class="card card-hover">
+          <img
+            src="https://images.unsplash.com/photo-1464965911861-746a04b4bca6?q=80&w=1200&auto=format&fit=crop"
+            alt="Strawberries"
+            class="h-44 w-full object-cover rounded-lg"
+          />
+          <div class="mt-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold">Strawberry</h3>
+              <span class="badge badge-harvest"
+                ><i class="fa-solid fa-basket-shopping" aria-hidden="true"></i>
+                Harvest</span
+              >
+            </div>
+            <p class="mt-2 text-sm text-ink-weak">
+              Mulch to retain moisture and keep berries clean. Watch for
+              runners.
+            </p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- =======================
+         SEASONS (responsive badges)
+         ======================= -->
+    <section id="seasons" class="max-w-screen-xl mx-auto px-4 sm:px-6 py-16">
+      <h2 class="section-title">Plan by season</h2>
+      <p class="mt-2 text-ink-weak">
+        Quick seasonal pointers to schedule seeding, growth, and harvest.
+      </p>
+
+      <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div class="card">
+          <div class="flex items-center gap-3">
+            <span class="badge badge-seed"
+              ><i class="fa-solid fa-seedling"></i> Seed</span
+            >
+            <span class="text-sm font-medium text-ink-weak">Early season</span>
+          </div>
+          <p class="mt-3 text-sm">
+            Cool-soil crops: lettuce, peas, carrots. Protect from late frost.
+          </p>
+        </div>
+        <div class="card">
+          <div class="flex items-center gap-3">
+            <span class="badge badge-grow"
+              ><i class="fa-solid fa-sun"></i> Grow</span
+            >
+            <span class="text-sm font-medium text-ink-weak">Mid season</span>
+          </div>
+          <p class="mt-3 text-sm">
+            Warm-season care: tomatoes, corn. Stake, mulch, and irrigate evenly.
+          </p>
+        </div>
+        <div class="card">
+          <div class="flex items-center gap-3">
+            <span class="badge badge-harvest"
+              ><i class="fa-solid fa-basket-shopping"></i> Harvest</span
+            >
+            <span class="text-sm font-medium text-ink-weak">Late season</span>
+          </div>
+          <p class="mt-3 text-sm">
+            Pick at peak ripeness. Cure and store where appropriate.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================
+         TESTIMONIALS
+         ======================= -->
+    <section
+      id="testimonials"
+      class="max-w-screen-xl mx-auto px-4 sm:px-6 py-16"
+    >
+      <h2 class="section-title">What growers say</h2>
+      <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <blockquote class="card">
+          <p class="text-base">
+            “EcoHuerta made planning our community garden effortless. The
+            seasonal tips are gold.”
+          </p>
+          <footer class="mt-4 flex items-center gap-3 text-sm text-ink-weak">
+            <i class="fa-solid fa-user"></i> Andrea, urban gardener
+          </footer>
+        </blockquote>
+        <blockquote class="card">
+          <p class="text-base">
+            “The utility-first approach is so clear here — I learned Tailwind
+            while improving my farm site.”
+          </p>
+          <footer class="mt-4 flex items-center gap-3 text-sm text-ink-weak">
+            <i class="fa-solid fa-user"></i> Luis, smallholder
+          </footer>
+        </blockquote>
+        <blockquote class="card">
+          <p class="text-base">
+            “Great dark-mode contrast and quick cards to onboard new
+            volunteers.”
+          </p>
+          <footer class="mt-4 flex items-center gap-3 text-sm text-ink-weak">
+            <i class="fa-solid fa-user"></i> Sofía, NGO coordinator
+          </footer>
+        </blockquote>
+      </div>
+    </section>
+
+    <!-- =======================
+         CTA
+         ======================= -->
+    <section class="relative">
+      <div
+        class="absolute inset-0 -z-10 bg-gradient-to-b from-surface to-eco-50 dark:from-surface dark:to-white/5"
+      ></div>
+      <div class="max-w-screen-xl mx-auto px-4 sm:px-6 py-16">
+        <div class="card md:flex md:items-center md:justify-between md:gap-8">
+          <div>
+            <h3 class="text-xl font-semibold">Ready to grow smarter?</h3>
+            <p class="mt-2 text-sm text-ink-weak">
+              Get a starter checklist for soil, sunlight, and water-wise
+              planning.
+            </p>
+          </div>
+          <a href="#subscribe" class="btn btn-primary mt-4 md:mt-0">
+            <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+            Get the checklist
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================
+         CONTACT & SUBSCRIPTION
+         ======================= -->
+    <section id="subscribe" class="max-w-screen-xl mx-auto px-4 sm:px-6 py-16">
+      <div class="grid lg:grid-cols-2 gap-10">
+        <!-- Contact -->
+        <div>
+          <h2 class="section-title">Contact</h2>
+          <p class="mt-2 text-ink-weak">
+            Have a question or want to collaborate? Send us a message.
+          </p>
+
+          <form class="mt-6 space-y-4" aria-labelledby="contact-form-title">
+            <h3 id="contact-form-title" class="sr-only">Contact form</h3>
+            <div>
+              <label for="name" class="block text-sm font-medium"
+                >Full name</label
+              >
+              <input
+                id="name"
+                name="name"
+                type="text"
+                class="input mt-1"
+                placeholder="Jane Doe"
+                autocomplete="name"
+                required
+              />
+            </div>
+            <div>
+              <label for="email" class="block text-sm font-medium">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                class="input mt-1"
+                placeholder="jane@example.com"
+                autocomplete="email"
+                required
+              />
+            </div>
+            <div>
+              <label for="message" class="block text-sm font-medium"
+                >Message</label
+              >
+              <textarea
+                id="message"
+                name="message"
+                rows="4"
+                class="input mt-1 resize-y"
+                placeholder="Tell us about your garden..."
+                required
+              ></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+              <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+              Send message
+            </button>
+          </form>
+        </div>
+
+        <!-- Subscription -->
+        <div>
+          <h2 class="section-title">Subscribe</h2>
+          <p class="mt-2 text-ink-weak">
+            Monthly updates on sustainable crops and seasonal reminders.
+          </p>
+
+          <form class="mt-6" aria-labelledby="newsletter-title">
+            <h3 id="newsletter-title" class="sr-only">
+              Newsletter subscription
+            </h3>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <label class="sr-only" for="news-email">Email</label>
+              <input
+                id="news-email"
+                type="email"
+                class="input"
+                placeholder="you@example.com"
+                required
+              />
+              <button type="submit" class="btn btn-secondary">
+                <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+                Subscribe
+              </button>
+            </div>
+            <p class="mt-3 text-xs text-ink-weak">
+              By subscribing, you agree to receive emails. Unsubscribe anytime.
+            </p>
+          </form>
+
+          <!-- Informational alert -->
+          <div class="mt-8 card">
+            <div class="flex items-start gap-3">
+              <i
+                class="fa-solid fa-circle-info text-eco-700 dark:text-eco-200 mt-1.5"
+                aria-hidden="true"
+              ></i>
+              <div>
+                <p class="font-medium">Privacy note</p>
+                <p class="text-sm text-ink-weak">
+                  We only use your email to share seasonal tips and resources.
+                  No spam.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =======================
+         FOOTER
+         ======================= -->
+    <footer class="border-t border-black/5">
+      <div class="max-w-screen-xl mx-auto px-4 sm:px-6 py-10 text-sm">
+        <div
+          class="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+        >
+          <p class="text-ink-weak">
+            © <span id="year"></span> EcoHuerta. All rights reserved.
+          </p>
+          <ul class="flex flex-wrap items-center gap-4">
+            <li><a class="hover:underline" href="#home">Home</a></li>
+            <li><a class="hover:underline" href="#crops">Crops</a></li>
+            <li><a class="hover:underline" href="#seasons">Seasons</a></li>
+            <li>
+              <a class="hover:underline" href="#subscribe"
+                >Contact & Subscribe</a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="mt-6 text-xs text-ink-weak">
+          <p>
+            Credits: demo content & images are placeholders (Unsplash). Built to
+            demonstrate Tailwind CSS v4 utilities, theming, and dark mode with
+            Play CDN.
+          </p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- =======================
+         SCRIPTS
+         ======================= -->
+    <script>
+      // Theme toggle button (class-based dark)
+      const btn = document.getElementById("themeToggle");
+      btn?.addEventListener("click", () => {
+        const root = document.documentElement;
+        const isDark = root.classList.toggle("dark");
+        btn.setAttribute("aria-pressed", String(isDark));
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+      });
+
+      // Current year in footer
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </body>
+</html>
